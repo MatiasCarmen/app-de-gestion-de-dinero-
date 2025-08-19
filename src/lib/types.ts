@@ -1,5 +1,5 @@
-export type TransactionType = "income" | "expense";
-export type TransactionCategory = "Ingresos" | "Comida" | "Transporte" | "Vivienda" | "Entretenimiento" | "Salud" | "Otros";
+export type TransactionType = 'income' | 'expense';
+export type TransactionCategory = string; // Allow more flexible categories
 
 export type Transaction = {
   id: string;
