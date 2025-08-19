@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { User } from 'lucide-react';
 import React from 'react';
 
-const familyMembers = ['SEBASTIAN', 'ARIANA', 'STHEFANY', 'TOMAS', 'PILAR'];
+const familyMembers = ['SEBASTIAN', 'ARIANA', 'STHEFANY', 'TOMAS', 'PILAR', 'MATIAS'];
 
 export function UserSelection() {
   const router = useRouter();

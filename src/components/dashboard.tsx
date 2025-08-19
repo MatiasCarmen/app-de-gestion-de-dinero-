@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { AlertCircle, Plus, BarChart2 } from 'lucide-react';
+import { AlertCircle, Plus, BarChart2, Briefcase } from 'lucide-react';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AIAdvisor } from '@/components/ai-advisor';
@@ -112,6 +112,14 @@ export function Dashboard() {
             Ver Reportes
           </Link>
         </Button>
+        {user === 'TOMAS' && (
+          <Button asChild variant="outline" className="flex-1">
+            <Link href="/junta">
+              <Briefcase className="mr-2" />
+              Administrar Junta
+            </Link>
+          </Button>
+        )}
       </div>
 
       <SummaryCards transactions={transactions} />
