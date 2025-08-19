@@ -7,6 +7,9 @@ import { Calendar as CalendarIcon, PlusCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -41,7 +44,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { Transaction } from '@/lib/types';
-import { useRouter } from 'next/navigation';
+
 
 const formSchema = z.object({
   type: z.enum(['income', 'expense'], {
@@ -65,6 +68,7 @@ const incomeCategories = ['Salario', 'Junta', 'Otros'];
 export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
   const { toast } = useToast();
   const [currentUser, setCurrentUser] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -88,25 +92,39 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
 
   const transactionType = form.watch('type');
 
-  function onSubmit(values: FormValues) {
-    const storedTransactions = localStorage.getItem('family-finance-transactions');
-    const transactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions).map((t: any) => ({...t, date: new Date(t.date)})) : [];
-    
-    const newTransaction: Transaction = {
-      id: new Date().toISOString(),
-      ...values,
-      person: currentUser,
-    };
+  async function onSubmit(values: FormValues) {
+    if (!currentUser) {
+        toast({
+            title: 'Error',
+            description: 'No se ha identificado al usuario.',
+            variant: 'destructive',
+        });
+        return;
+    }
+    setIsSubmitting(true);
+    try {
+        await addDoc(collection(db, 'transactions'), {
+            ...values,
+            person: currentUser,
+            createdAt: serverTimestamp(),
+        });
 
-    const updatedTransactions = [newTransaction, ...transactions];
-    localStorage.setItem('family-finance-transactions', JSON.stringify(updatedTransactions));
-
-    toast({
-      title: 'Transacción Agregada',
-      description: `Se agregó ${values.type === 'income' ? 'un ingreso' : 'un gasto'} de ${values.amount}.`,
-    });
-    form.reset();
-    onTransactionAdded();
+        toast({
+          title: 'Transacción Agregada',
+          description: `Se agregó ${values.type === 'income' ? 'un ingreso' : 'un gasto'} de S/${values.amount}.`,
+        });
+        form.reset();
+        onTransactionAdded();
+    } catch (error) {
+        console.error("Error adding document: ", error);
+        toast({
+            title: 'Error',
+            description: 'No se pudo agregar la transacción. Inténtelo de nuevo.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   }
 
   return (
@@ -249,8 +267,8 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
               )}
             />
 
-            <Button type="submit" className="w-full">
-              Agregar Transacción
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? 'Agregando...' : 'Agregar Transacción'}
             </Button>
           </form>
         </Form>

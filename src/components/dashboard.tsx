@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { AlertCircle, Plus, BarChart2 } from 'lucide-react';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { AIAdvisor } from '@/components/ai-advisor';
 import { SpendingChart } from '@/components/spending-chart';
 import { SummaryCards } from '@/components/summary-cards';
@@ -11,40 +13,13 @@ import { type Transaction } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Skeleton } from './ui/skeleton';
 
-const initialTransactions: Transaction[] = [
-  {
-    id: '1',
-    type: 'income',
-    amount: 3000,
-    category: 'Ingresos',
-    date: new Date(),
-    person: 'Mamá',
-    description: 'Salario mensual',
-  },
-  {
-    id: '2',
-    type: 'expense',
-    amount: 75.5,
-    category: 'Comida',
-    date: new Date(),
-    person: 'Papá',
-    description: 'Compras en el supermercado',
-  },
-  {
-    id: '3',
-    type: 'expense',
-    amount: 120,
-    category: 'Transporte',
-    date: new Date(new Date().setDate(new Date().getDate() - 1)),
-    person: 'Mamá',
-    description: 'Gasolina del coche',
-  },
-];
 
 export function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [user, setUser] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -53,22 +28,32 @@ export function Dashboard() {
       router.push('/');
     } else {
       setUser(storedUser);
-      // Load transactions from localStorage or use initial if none
-      const storedTransactions = localStorage.getItem('family-finance-transactions');
-      if (storedTransactions) {
-        setTransactions(JSON.parse(storedTransactions).map((t: any) => ({...t, date: new Date(t.date)})));
-      } else {
-        setTransactions(initialTransactions);
-      }
     }
   }, [router]);
   
   useEffect(() => {
-    // Persist transactions to localStorage
-     if (transactions.length) {
-        localStorage.setItem('family-finance-transactions', JSON.stringify(transactions));
-     }
-  }, [transactions]);
+    if (user) {
+      const q = query(collection(db, "transactions"), orderBy("date", "desc"));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const transactionsData: Transaction[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          transactionsData.push({
+            id: doc.id,
+            ...data,
+            date: data.date.toDate(),
+          } as Transaction);
+        });
+        setTransactions(transactionsData);
+        setLoading(false);
+      }, (error) => {
+        console.error("Error fetching transactions: ", error);
+        setLoading(false);
+      });
+
+      return () => unsubscribe();
+    }
+  }, [user]);
 
 
   const balance = useMemo(() => {
@@ -81,8 +66,25 @@ export function Dashboard() {
     return totalIncome - totalExpenses;
   }, [transactions]);
 
-  if (!user) {
-    return null; // or a loading spinner
+  if (!user || loading) {
+    return (
+      <div className="flex flex-col gap-4 md:gap-8 p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row gap-2">
+            <Skeleton className="h-10 flex-1" />
+            <Skeleton className="h-10 flex-1" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-2">
+            <Skeleton className="h-80" />
+            <Skeleton className="h-80" />
+        </div>
+        <Skeleton className="h-96" />
+      </div>
+    );
   }
 
   return (
