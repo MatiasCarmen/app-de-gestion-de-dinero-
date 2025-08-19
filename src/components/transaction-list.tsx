@@ -30,9 +30,9 @@ interface TransactionListProps {
 }
 
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-ES", {
+    return new Intl.NumberFormat("es-PE", {
         style: "currency",
-        currency: "EUR",
+        currency: "PEN",
     }).format(amount);
 };
 

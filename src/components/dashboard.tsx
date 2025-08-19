@@ -74,13 +74,11 @@ export function Dashboard() {
 
       <SummaryCards transactions={transactions} />
 
-      <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-5">
-        <div className="lg:col-span-3 grid gap-4 md:gap-8">
+      <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-2">
+        <TransactionForm onAddTransaction={addTransaction} />
+        <div className="grid gap-4 md:gap-8">
             <SpendingChart transactions={transactions} />
             <AIAdvisor transactions={transactions} />
-        </div>
-        <div className="lg:col-span-2">
-            <TransactionForm onAddTransaction={addTransaction} />
         </div>
       </div>
       
