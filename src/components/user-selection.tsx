@@ -25,7 +25,7 @@ export function UserSelection() {
         <CardDescription>Selecciona tu perfil para continuar</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col space-y-4">
+        <div className="grid grid-cols-2 gap-4">
           {familyMembers.map((member) => (
             <Button
               key={member}
