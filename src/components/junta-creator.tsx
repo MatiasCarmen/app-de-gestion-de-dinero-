@@ -3,11 +3,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { addDays, differenceInDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ArrowRight, BarChart3, Calculator, CalendarIcon, CheckCircle, CircleDollarSign, Plus, Trash2, Users, Wand2, XCircle } from 'lucide-react';
+import { ArrowRight, BarChart3, Calculator, CalendarIcon, CheckCircle, Plus, Trash2, Users, Wand2, XCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -32,7 +31,6 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { DateRange } from 'react-day-picker';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -149,11 +147,11 @@ export function JuntaCreator() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center gap-4 p-8">
-                <Button size="lg" onClick={() => assignDates('random')}>
+                <Button size="lg" onClick={() => assignDates('random')} className="w-full sm:w-auto">
                     <Wand2 className="mr-2" />
                     Asignación con Ruleta (Aleatorio)
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => assignDates('manual')}>
+                <Button size="lg" variant="outline" onClick={() => assignDates('manual')} className="w-full sm:w-auto">
                     <ArrowRight className="mr-2" />
                     Asignación Manual (En orden)
                 </Button>
@@ -203,7 +201,7 @@ export function JuntaCreator() {
                                 format(field.value.from, 'LLL dd, y')
                             )
                             ) : (
-                            <span>Selecciona un rango de fechas</span>
+                            <span>Selecciona un rango</span>
                             )}
                         </Button>
                         </PopoverTrigger>
@@ -214,7 +212,7 @@ export function JuntaCreator() {
                             defaultMonth={field.value?.from}
                             selected={field.value?.from && field.value?.to ? { from: field.value.from, to: field.value.to } : undefined}
                             onSelect={field.onChange}
-                            numberOfMonths={2}
+                            numberOfMonths={1}
                             locale={es}
                         />
                         </PopoverContent>
@@ -319,19 +317,19 @@ function JuntaDashboard({ initialJunta, onReset }: { initialJunta: any; onReset:
 
     return (
         <Card>
-            <CardHeader className="flex flex-row items-start justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <CardTitle>Dashboard de la Junta</CardTitle>
                     <CardDescription>
-                        Seguimiento de aportes del {format(junta.dateRange.from, 'PPP', { locale: es })} al {format(junta.dateRange.to, 'PPP', { locale: es })}
+                        Seguimiento del {format(junta.dateRange.from, 'PPP', { locale: es })} al {format(junta.dateRange.to, 'PPP', { locale: es })}
                     </CardDescription>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <CalculatorTool />
                     <Button onClick={handleGoToReports} variant="outline" size="sm">
                        <BarChart3 className="mr-2" /> Ver Reportes
                     </Button>
-                    <Button onClick={onReset} variant="outline" size="sm">Crear Nueva Junta</Button>
+                    <Button onClick={onReset} variant="outline" size="sm">Nueva Junta</Button>
                 </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -341,9 +339,9 @@ function JuntaDashboard({ initialJunta, onReset }: { initialJunta: any; onReset:
                             <CardTitle className="flex items-center gap-2"><Users />Participantes ({junta.participants.length})</CardTitle>
                         </CardHeader>
                         <CardContent>
-                             <ul className="space-y-2 max-h-48 overflow-y-auto">
+                             <ul className="space-y-2 max-h-48 overflow-y-auto pr-2">
                                 {junta.participants.sort((a: Participant, b: Participant) => a.assignedDate!.getTime() - b.assignedDate!.getTime()).map((p: Participant) => (
-                                    <li key={p.name} className="flex justify-between items-center p-2 rounded-md bg-muted">
+                                    <li key={p.name} className="flex justify-between items-center p-2 rounded-md bg-muted text-sm">
                                         <span className="font-medium">{p.name}</span>
                                         <Badge variant="secondary">{format(p.assignedDate!, 'dd MMM', { locale: es })}</Badge>
                                     </li>
@@ -363,7 +361,7 @@ function JuntaDashboard({ initialJunta, onReset }: { initialJunta: any; onReset:
                            <div className="text-center">
                                 <p className="text-sm text-muted-foreground">Total Recaudado</p>
                                 <p className="text-4xl font-bold text-primary">S/ {totalCollected.toFixed(2)}</p>
-                                <p className="text-sm text-muted-foreground">de {totalExpected.toFixed(2)} esperado</p>
+                                <p className="text-xs text-muted-foreground">de {totalExpected.toFixed(2)} esperado</p>
                            </div>
                         </CardContent>
                     </Card>
@@ -371,7 +369,7 @@ function JuntaDashboard({ initialJunta, onReset }: { initialJunta: any; onReset:
                 
                 <div>
                     <h3 className="text-xl font-semibold mb-4">Registro de Aportes Diarios</h3>
-                    <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
                         {Array.from({ length: differenceInDays(junta.dateRange.to, junta.dateRange.from) + 1 }, (_, i) => {
                             const day = addDays(junta.dateRange.from, i);
                             const dayString = format(day, 'yyyy-MM-dd');
@@ -379,20 +377,22 @@ function JuntaDashboard({ initialJunta, onReset }: { initialJunta: any; onReset:
                             const payment = payments[dayString];
                             return (
                                 <Card key={dayString}>
-                                    <CardHeader className="flex flex-row justify-between items-center">
-                                        <CardTitle className="text-lg">{format(day, 'EEEE, dd MMMM', { locale: es })}</CardTitle>
-                                        {payment?.paid ? (
-                                            <Badge variant="default" className="bg-green-500 text-white"><CheckCircle className="mr-1 h-4 w-4"/>Recibido</Badge>
-                                        ) : (
-                                            <Badge variant="destructive"><XCircle className="mr-1 h-4 w-4"/>Pendiente</Badge>
-                                        )}
+                                    <CardHeader className="p-4">
+                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                          <CardTitle className="text-lg">{format(day, 'EEEE, dd MMMM', { locale: es })}</CardTitle>
+                                          {payment?.paid ? (
+                                              <Badge variant="default" className="bg-green-500 text-white"><CheckCircle className="mr-1 h-4 w-4"/>Recibido</Badge>
+                                          ) : (
+                                              <Badge variant="destructive"><XCircle className="mr-1 h-4 w-4"/>Pendiente</Badge>
+                                          )}
+                                        </div>
                                     </CardHeader>
-                                    <CardContent>
-                                        <div className="flex items-center justify-between">
+                                    <CardContent className="p-4 pt-0">
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                                             <div>
                                                <p>Le toca a: <span className="font-bold text-primary">{responsible}</span></p>
                                                {payment?.paid && (
-                                                <p className="text-sm text-muted-foreground">
+                                                <p className="text-xs text-muted-foreground">
                                                     Pagado S/{payment.amount.toFixed(2)} vía {payment.method}{payment.method === 'yape' ? ` a ${payment.yapeTo}` : ''}
                                                 </p>
                                                )}
@@ -435,9 +435,9 @@ function PaymentDialog({ dailyContribution, responsible, onSave, payment }: { da
     return (
          <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant={payment?.paid ? "outline" : "default"}>{payment?.paid ? 'Editar Aporte' : 'Registrar Aporte'}</Button>
+                <Button variant={payment?.paid ? "outline" : "default"} size="sm" className="mt-2 sm:mt-0">{payment?.paid ? 'Editar Aporte' : 'Registrar Aporte'}</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Registrar aporte de {responsible}</DialogTitle>
                     <DialogDescription>
@@ -453,7 +453,7 @@ function PaymentDialog({ dailyContribution, responsible, onSave, payment }: { da
                                 <FormItem>
                                     <FormLabel>Monto Recibido</FormLabel>
                                     <FormControl>
-                                        <Input type="number" {...field} />
+                                        <Input type="number" step="0.01" {...field} />
                                     </FormControl>
                                 </FormItem>
                             )}

@@ -54,10 +54,10 @@ export const TransactionList: FC<TransactionListProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Fecha</TableHead>
+              <TableHead className="hidden sm:table-cell">Fecha</TableHead>
               <TableHead>Descripción</TableHead>
-              <TableHead>Categoría</TableHead>
-              <TableHead>Persona</TableHead>
+              <TableHead className="hidden md:table-cell">Categoría</TableHead>
+              <TableHead className="hidden md:table-cell">Persona</TableHead>
               <TableHead className="text-right">Monto</TableHead>
             </TableRow>
           </TableHeader>
@@ -65,14 +65,19 @@ export const TransactionList: FC<TransactionListProps> = ({
             {transactions.length > 0 ? (
               transactions.map((t) => (
                 <TableRow key={t.id}>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     {format(t.date, "dd MMM, yyyy", { locale: es })}
                   </TableCell>
-                  <TableCell className="font-medium">{t.description}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium">
+                    <p className="font-medium">{t.description}</p>
+                    <p className="text-xs text-muted-foreground sm:hidden">
+                      {format(t.date, "dd MMM, yyyy", { locale: es })}
+                    </p>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <Badge variant="outline">{t.category}</Badge>
                   </TableCell>
-                  <TableCell>{t.person}</TableCell>
+                  <TableCell className="hidden md:table-cell">{t.person}</TableCell>
                   <TableCell
                     className={cn(
                       "text-right font-semibold",
