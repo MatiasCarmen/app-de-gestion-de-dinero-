@@ -18,7 +18,7 @@ export default function AddTransactionPage() {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Volver
             </Button>
-            <TransactionForm onFormSubmit={() => router.push('/dashboard')} />
+            <TransactionForm />
         </div>
       </main>
       <Toaster />

@@ -59,14 +59,13 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface TransactionFormProps {
-  onFormSubmit: () => void;
   initialData?: Transaction;
 }
 
 const expenseCategories = ['Comida', 'Transporte', 'Vivienda', 'Entretenimiento', 'Salud', 'Otros'];
 const incomeCategories = ['Salario', 'Junta', 'Otros'];
 
-export function TransactionForm({ onFormSubmit, initialData }: TransactionFormProps) {
+export function TransactionForm({ initialData }: TransactionFormProps) {
   const { toast } = useToast();
   const [currentUser, setCurrentUser] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -140,8 +139,7 @@ export function TransactionForm({ onFormSubmit, initialData }: TransactionFormPr
             });
         }
         
-        form.reset();
-        onFormSubmit();
+        router.push('/dashboard');
     } catch (error) {
         console.error("Error processing document: ", error);
         toast({

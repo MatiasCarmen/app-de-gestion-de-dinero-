@@ -63,7 +63,6 @@ export default function EditTransactionPage() {
           {!loading && !error && transaction && (
             <TransactionForm 
               initialData={transaction} 
-              onFormSubmit={() => router.push('/dashboard')} 
             />
           )}
         </div>
