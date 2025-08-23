@@ -3,11 +3,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon, PlusCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Edit, PlusCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, serverTimestamp, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
@@ -59,17 +59,20 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface TransactionFormProps {
-  onTransactionAdded: () => void;
+  onFormSubmit: () => void;
+  initialData?: Transaction;
 }
 
 const expenseCategories = ['Comida', 'Transporte', 'Vivienda', 'Entretenimiento', 'Salud', 'Otros'];
 const incomeCategories = ['Salario', 'Junta', 'Otros'];
 
-export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
+export function TransactionForm({ onFormSubmit, initialData }: TransactionFormProps) {
   const { toast } = useToast();
   const [currentUser, setCurrentUser] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+
+  const isEditMode = !!initialData;
 
   useEffect(() => {
     const user = localStorage.getItem('family-finance-user');
@@ -82,18 +85,30 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: initialData ? {
+        ...initialData,
+        date: initialData.date,
+    } : {
       type: 'expense',
       amount: 0,
       description: '',
       date: new Date(),
     },
   });
+  
+  useEffect(() => {
+    if (initialData) {
+        form.reset({
+            ...initialData,
+            date: initialData.date instanceof Timestamp ? initialData.date.toDate() : initialData.date,
+        });
+    }
+  }, [initialData, form]);
 
   const transactionType = form.watch('type');
 
   async function onSubmit(values: FormValues) {
-    if (!currentUser) {
+    if (!currentUser && !isEditMode) {
         toast({
             title: 'Error',
             description: 'No se ha identificado al usuario.',
@@ -103,23 +118,35 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
     }
     setIsSubmitting(true);
     try {
-        await addDoc(collection(db, 'transactions'), {
-            ...values,
-            person: currentUser,
-            createdAt: serverTimestamp(),
-        });
-
-        toast({
-          title: 'Transacción Agregada',
-          description: `Se agregó ${values.type === 'income' ? 'un ingreso' : 'un gasto'} de S/${values.amount}.`,
-        });
+        if (isEditMode) {
+            const transactionRef = doc(db, 'transactions', initialData.id);
+            await setDoc(transactionRef, {
+                ...values,
+                person: initialData.person, // Keep the original person
+            }, { merge: true });
+            toast({
+              title: 'Transacción Actualizada',
+              description: 'El registro se ha actualizado correctamente.',
+            });
+        } else {
+            await addDoc(collection(db, 'transactions'), {
+                ...values,
+                person: currentUser,
+                createdAt: serverTimestamp(),
+            });
+            toast({
+              title: 'Transacción Agregada',
+              description: `Se agregó ${values.type === 'income' ? 'un ingreso' : 'un gasto'} de S/${values.amount}.`,
+            });
+        }
+        
         form.reset();
-        onTransactionAdded();
+        onFormSubmit();
     } catch (error) {
-        console.error("Error adding document: ", error);
+        console.error("Error processing document: ", error);
         toast({
             title: 'Error',
-            description: 'No se pudo agregar la transacción. Inténtelo de nuevo.',
+            description: 'No se pudo procesar la transacción. Inténtelo de nuevo.',
             variant: 'destructive',
         });
     } finally {
@@ -131,11 +158,11 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
-          <PlusCircle className="h-5 w-5 text-primary" />
-          Agregar Transacción
+          {isEditMode ? <Edit className="h-5 w-5 text-primary" /> : <PlusCircle className="h-5 w-5 text-primary" />}
+          {isEditMode ? 'Editar Transacción' : 'Agregar Transacción'}
         </CardTitle>
         <CardDescription>
-          Registre un nuevo ingreso o gasto.
+          {isEditMode ? 'Modifique los detalles del registro.' : 'Registre un nuevo ingreso o gasto.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -150,7 +177,7 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
                    <Select onValueChange={(value) => {
                        field.onChange(value);
                        form.resetField("category");
-                   }} defaultValue={field.value}>
+                   }} defaultValue={field.value} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione un tipo" />
@@ -220,7 +247,7 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
             <FormItem>
                 <FormLabel>Persona</FormLabel>
                 <FormControl>
-                    <Input value={currentUser} readOnly disabled />
+                    <Input value={isEditMode ? initialData.person : currentUser} readOnly disabled />
                 </FormControl>
             </FormItem>
 
@@ -268,7 +295,7 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
             />
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? 'Agregando...' : 'Agregar Transacción'}
+              {isSubmitting ? (isEditMode ? 'Guardando...' : 'Agregando...') : (isEditMode ? 'Guardar Cambios' : 'Agregar Transacción')}
             </Button>
           </form>
         </Form>
