@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { Bar, BarChart, CartesianGrid, Pie, PieChart, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from './ui/button';
+import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 
 interface Participant {
