@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from './ui/skeleton';
+import Loading from '@/app/loading';
 
 
 function DashboardSkeleton() {
@@ -88,8 +89,8 @@ export function Dashboard() {
     return totalIncome - totalExpenses;
   }, [transactions]);
 
-  if (!user || loading) {
-    return <DashboardSkeleton />;
+  if (loading || !user) {
+    return <Loading />;
   }
 
   return (
