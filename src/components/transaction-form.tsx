@@ -118,7 +118,7 @@ export function TransactionForm({ onFormSubmit, initialData }: TransactionFormPr
     }
     setIsSubmitting(true);
     try {
-        if (isEditMode) {
+        if (isEditMode && initialData) {
             const transactionRef = doc(db, 'transactions', initialData.id);
             await setDoc(transactionRef, {
                 ...values,
@@ -247,7 +247,7 @@ export function TransactionForm({ onFormSubmit, initialData }: TransactionFormPr
             <FormItem>
                 <FormLabel>Persona</FormLabel>
                 <FormControl>
-                    <Input value={isEditMode ? initialData.person : currentUser} readOnly disabled />
+                    <Input value={isEditMode && initialData ? initialData.person : currentUser} readOnly disabled />
                 </FormControl>
             </FormItem>
 
