@@ -19,7 +19,7 @@ import Loading from '@/app/loading';
 
 function DashboardSkeleton() {
     return (
-      <div className="flex flex-col gap-4 md:gap-8 p-4 md:p-6">
+      <div className="flex flex-col gap-4 md:gap-8">
         <div className="flex flex-col sm:flex-row gap-2">
             <Skeleton className="h-10 flex-1" />
             <Skeleton className="h-10 flex-1" />

@@ -1,6 +1,6 @@
 "use client";
 
-import type { FC, useState } from "react";
+import type { FC } from "react";
 import React from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -133,12 +133,12 @@ export const TransactionList: FC<TransactionListProps> = ({
                     </TableCell>
                     <TableCell className="text-right">
                        <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(t.id)}>
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(t.id)} aria-label="Editar">
                             <Pencil className="h-4 w-4" />
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" aria-label="Eliminar">
                                 <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </AlertDialogTrigger>
@@ -164,7 +164,7 @@ export const TransactionList: FC<TransactionListProps> = ({
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center">
-                    No hay transacciones.
+                    No hay transacciones registradas.
                   </TableCell>
                 </TableRow>
               )}

@@ -84,10 +84,7 @@ export function TransactionForm({ initialData }: TransactionFormProps) {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData ? {
-        ...initialData,
-        date: initialData.date,
-    } : {
+    defaultValues: initialData || {
       type: 'expense',
       amount: 0,
       description: '',
@@ -97,10 +94,7 @@ export function TransactionForm({ initialData }: TransactionFormProps) {
   
   useEffect(() => {
     if (initialData) {
-        form.reset({
-            ...initialData,
-            date: initialData.date instanceof Timestamp ? initialData.date.toDate() : initialData.date,
-        });
+        form.reset(initialData);
     }
   }, [initialData, form]);
 
@@ -157,10 +151,10 @@ export function TransactionForm({ initialData }: TransactionFormProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
           {isEditMode ? <Edit className="h-5 w-5 text-primary" /> : <PlusCircle className="h-5 w-5 text-primary" />}
-          {isEditMode ? 'Editar Transacción' : 'Agregar Transacción'}
+          {isEditMode ? 'Editar Transacción' : 'Agregar Nueva Transacción'}
         </CardTitle>
         <CardDescription>
-          {isEditMode ? 'Modifique los detalles del registro.' : 'Registre un nuevo ingreso o gasto.'}
+          {isEditMode ? 'Modifique los detalles del registro existente.' : 'Registre un nuevo ingreso o gasto para la familia.'}
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -49,6 +49,10 @@ export default function EditTransactionPage() {
     fetchTransaction();
   }, [id]);
 
+  if (loading) {
+    return <Loading />;
+  }
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
       <Header />
@@ -58,9 +62,8 @@ export default function EditTransactionPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver
           </Button>
-          {loading && <Loading />}
           {error && <p className="text-destructive text-center">{error}</p>}
-          {!loading && !error && transaction && (
+          {!error && transaction && (
             <TransactionForm 
               initialData={transaction} 
             />
