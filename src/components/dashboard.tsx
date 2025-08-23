@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { AlertCircle, Plus, BarChart2, Briefcase } from 'lucide-react';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -14,6 +14,28 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from './ui/skeleton';
+
+
+function DashboardSkeleton() {
+    return (
+      <div className="flex flex-col gap-4 md:gap-8 p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row gap-2">
+            <Skeleton className="h-10 flex-1" />
+            <Skeleton className="h-10 flex-1" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-2">
+            <Skeleton className="h-80" />
+            <Skeleton className="h-80" />
+        </div>
+        <Skeleton className="h-96" />
+      </div>
+    );
+}
 
 
 export function Dashboard() {
@@ -67,24 +89,7 @@ export function Dashboard() {
   }, [transactions]);
 
   if (!user || loading) {
-    return (
-      <div className="flex flex-col gap-4 md:gap-8 p-4 md:p-6">
-        <div className="flex flex-col sm:flex-row gap-2">
-            <Skeleton className="h-10 flex-1" />
-            <Skeleton className="h-10 flex-1" />
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-2">
-            <Skeleton className="h-80" />
-            <Skeleton className="h-80" />
-        </div>
-        <Skeleton className="h-96" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -122,14 +127,28 @@ export function Dashboard() {
         )}
       </div>
 
-      <SummaryCards transactions={transactions} />
+      <Suspense fallback={
+        <div className="grid gap-4 md:grid-cols-3">
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+        </div>
+      }>
+        <SummaryCards transactions={transactions} />
+      </Suspense>
 
       <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-2">
-        <SpendingChart transactions={transactions} />
-        <AIAdvisor transactions={transactions} />
+        <Suspense fallback={<Skeleton className="h-80" />}>
+          <SpendingChart transactions={transactions} />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="h-80" />}>
+         <AIAdvisor transactions={transactions} />
+        </Suspense>
       </div>
       
-      <TransactionList transactions={transactions} />
+      <Suspense fallback={<Skeleton className="h-96" />}>
+        <TransactionList transactions={transactions} />
+      </Suspense>
     </div>
   );
 }
