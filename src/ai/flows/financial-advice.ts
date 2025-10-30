@@ -9,56 +9,50 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { z } from 'genkit';
+import { MessageData, role } from 'genkit/ai';
 
-const FinancialAdviceInputSchema = z.object({
-  income: z
-    .number()
-    .describe('The total monthly income of the user.'),
-  expenses: z
-    .number()
-    .describe('The total monthly expenses of the user.'),
+const FinancialContextSchema = z.object({
+  income: z.number().describe('The total monthly income of the user.'),
+  expenses: z.number().describe('The total monthly expenses of the user.'),
   spendingPatterns: z
     .string()
     .describe(
       'A detailed description of the user spending habits, including categories and amounts.'
     ),
 });
-export type FinancialAdviceInput = z.infer<typeof FinancialAdviceInputSchema>;
 
-const FinancialAdviceOutputSchema = z.object({
-  advice: z.string().describe('Personalized financial advice for the user.'),
-  summary: z.string().describe('A summary of the income, expenses, and spending patterns.'),
+const FinancialChatInputSchema = z.object({
+  history: z.array(z.custom<MessageData>()),
+  context: FinancialContextSchema,
 });
-export type FinancialAdviceOutput = z.infer<typeof FinancialAdviceOutputSchema>;
 
-export async function getFinancialAdvice(input: FinancialAdviceInput): Promise<FinancialAdviceOutput> {
-  return financialAdviceFlow(input);
+export type FinancialChatInput = z.infer<typeof FinancialChatInputSchema>;
+
+
+export async function financialChat(input: FinancialChatInput): Promise<string> {
+  const { history, context } = input;
+
+  const systemPrompt = `You are a helpful and friendly personal finance advisor. 
+  Your name is 'FinPal'.
+  Analyze the user's financial situation based on their income, expenses, and spending patterns, and answer their questions.
+  Provide advice in a concise and actionable manner.
+  Be friendly and use emojis where appropriate.
+
+  Here is the user's current financial context:
+  - Total Income: ${context.income}
+  - Total Expenses: ${context.expenses}
+  - Spending Patterns: ${context.spendingPatterns || "Not available."}
+
+  Keep your answers short and to the point.
+  Start the conversation by introducing yourself and offering help.
+  `;
+
+  const chain = ai.prompt({
+    system: systemPrompt,
+    messages: history,
+  });
+
+  const { text } = await chain;
+  return text;
 }
-
-const prompt = ai.definePrompt({
-  name: 'financialAdvicePrompt',
-  input: {schema: FinancialAdviceInputSchema},
-  output: {schema: FinancialAdviceOutputSchema},
-  prompt: `You are a personal finance advisor. Analyze the user's financial situation based on their income, expenses, and spending patterns, and provide personalized advice on how to improve their financial health.
-
-  Income: {{{income}}}
-  Expenses: {{{expenses}}}
-  Spending Patterns: {{{spendingPatterns}}}
-
-  Provide the advice in a concise and actionable manner. Also provide a short summary of the user's financial situation.
-  Summary:
-  Advice:`, // Ensure proper formatting for the summary and advice
-});
-
-const financialAdviceFlow = ai.defineFlow(
-  {
-    name: 'financialAdviceFlow',
-    inputSchema: FinancialAdviceInputSchema,
-    outputSchema: FinancialAdviceOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);

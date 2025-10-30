@@ -1,9 +1,9 @@
 "use client";
 
 import type { FC } from "react";
-import React, { useState, useTransition } from "react";
-import { Wand2 } from "lucide-react";
-import { getFinancialAdvice, type FinancialAdviceOutput } from "@/ai/flows/financial-advice";
+import React, { useState, useTransition, useRef, useEffect } from "react";
+import { Send, Wand2 } from "lucide-react";
+import { financialChat } from "@/ai/flows/financial-advice";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,6 +15,10 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Transaction } from "@/lib/types";
+import { MessageData } from "genkit/ai";
+import { Textarea } from "./ui/textarea";
+import { ScrollArea } from "./ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface AIAdvisorProps {
   transactions: Transaction[];
@@ -22,13 +26,46 @@ interface AIAdvisorProps {
 
 export const AIAdvisor: FC<AIAdvisorProps> = ({ transactions }) => {
   const [isPending, startTransition] = useTransition();
-  const [advice, setAdvice] = useState<FinancialAdviceOutput | null>(null);
+  const [messages, setMessages] = useState<MessageData[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [input, setInput] = useState("");
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const handleGetAdvice = () => {
+
+  useEffect(() => {
+    // Initial message from the assistant
+    setMessages([
+      {
+        role: "model",
+        content: [{ text: "¡Hola! Soy FinPal, tu asesor financiero personal. 🤖 ¿En qué puedo ayudarte hoy?" }],
+      },
+    ]);
+  }, []);
+
+  useEffect(() => {
+    // Scroll to the bottom when new messages are added
+    if (scrollAreaRef.current) {
+        scrollAreaRef.current.scrollTo({
+            top: scrollAreaRef.current.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+  }, [messages]);
+
+
+  const handleSendMessage = () => {
+    if (!input.trim()) return;
+
+    const userMessage: MessageData = {
+      role: "user",
+      content: [{ text: input }],
+    };
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+    setInput("");
+
     startTransition(async () => {
       setError(null);
-      setAdvice(null);
       try {
         const income = transactions
           .filter((t) => t.type === "income")
@@ -37,9 +74,9 @@ export const AIAdvisor: FC<AIAdvisorProps> = ({ transactions }) => {
           .filter((t) => t.type === "expense")
           .reduce((acc, t) => acc + t.amount, 0);
 
-        if (income === 0 && expenses === 0) {
-          setError("No hay suficientes datos para generar consejos. Por favor, agregue algunas transacciones.");
-          return;
+        if (transactions.length === 0) {
+            setMessages(prev => [...prev, { role: "model", content: [{ text: "No tienes transacciones todavía. ¡Añade algunas para que pueda ayudarte a analizar tus finanzas! 📈" }] }]);
+            return;
         }
 
         const spendingPatterns = transactions
@@ -52,12 +89,17 @@ export const AIAdvisor: FC<AIAdvisorProps> = ({ transactions }) => {
           )
           .join(", ");
 
-        const result = await getFinancialAdvice({
-          income,
-          expenses,
-          spendingPatterns: spendingPatterns || "No expenses recorded.",
+        const response = await financialChat({
+          history: newMessages,
+          context: {
+            income,
+            expenses,
+            spendingPatterns: spendingPatterns || "No expenses recorded.",
+          }
         });
-        setAdvice(result);
+        
+        setMessages(prev => [...prev, { role: "model", content: [{ text: response }] }]);
+
       } catch (e) {
         setError("No se pudieron obtener los consejos de la IA. Inténtelo de nuevo más tarde.");
         console.error(e);
@@ -66,46 +108,62 @@ export const AIAdvisor: FC<AIAdvisorProps> = ({ transactions }) => {
   };
 
   return (
-    <Card className="col-span-1 md:col-span-2">
+    <Card className="col-span-1 md:col-span-2 flex flex-col h-[400px]">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
           <Wand2 className="h-5 w-5 text-accent" />
           Asesor Financiero de IA
         </CardTitle>
         <CardDescription>
-          Obtenga consejos personalizados sobre cómo mejorar su salud financiera basados en sus hábitos.
+          Conversa con FinPal para obtener consejos sobre tus finanzas.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        {isPending ? (
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        ) : error ? (
-          <p className="text-destructive">{error}</p>
-        ) : advice ? (
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-semibold">Resumen Financiero</h3>
-              <p className="text-sm text-muted-foreground">{advice.summary}</p>
+      <CardContent className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full" ref={scrollAreaRef}>
+            <div className="space-y-4 pr-4">
+                {messages.map((message, index) => (
+                    <div
+                        key={index}
+                        className={cn(
+                        "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+                        message.role === "user"
+                            ? "ml-auto bg-primary text-primary-foreground"
+                            : "bg-muted"
+                        )}
+                    >
+                        {message.content[0].text}
+                    </div>
+                ))}
+                {isPending && (
+                    <div className="flex items-center space-x-2">
+                        <Skeleton className="h-4 w-4 rounded-full" />
+                        <Skeleton className="h-4 w-[200px]" />
+                    </div>
+                )}
+                 {error && <p className="text-destructive">{error}</p>}
             </div>
-            <div>
-              <h3 className="font-semibold">Consejos</h3>
-              <p className="text-sm text-muted-foreground">{advice.advice}</p>
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Haga clic en el botón para generar un análisis de IA de sus finanzas.
-          </p>
-        )}
+        </ScrollArea>
       </CardContent>
       <CardFooter>
-        <Button onClick={handleGetAdvice} disabled={isPending} variant="secondary">
-          {isPending ? "Generando..." : "Obtener Consejos de IA"}
-        </Button>
+        <div className="flex w-full items-center space-x-2">
+            <Textarea
+                id="message"
+                placeholder="Escribe tu pregunta aquí..."
+                className="resize-none"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                    }
+                }}
+            />
+            <Button onClick={handleSendMessage} disabled={isPending || !input.trim()} size="icon">
+                <Send className="h-4 w-4" />
+                <span className="sr-only">Enviar</span>
+            </Button>
+        </div>
       </CardFooter>
     </Card>
   );
