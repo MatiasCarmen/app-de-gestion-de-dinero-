@@ -1,5 +1,3 @@
-# Firebase Studio
+# Gestion de dinero — Next.js
 
-This is a NextJS starter in Firebase Studio.
-
-To get started, take a look at src/app/page.tsx.
+Este es un proyecto Next.js. Para empezar revisa `src/app/page.tsx`.

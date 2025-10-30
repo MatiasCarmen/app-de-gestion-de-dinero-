@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { doc, getDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { doc, getDoc, Timestamp, db } from '@/lib/firebase';
 import { TransactionForm } from '@/components/transaction-form';
 import { Header } from '@/components/header';
 import { Toaster } from '@/components/ui/toaster';

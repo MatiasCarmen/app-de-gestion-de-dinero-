@@ -2,8 +2,7 @@
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { AlertCircle, Plus, BarChart2, Briefcase } from 'lucide-react';
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, onSnapshot, orderBy, query, db } from '@/lib/firebase';
 import { AIAdvisor } from '@/components/ai-advisor';
 import { SpendingChart } from '@/components/spending-chart';
 import { SummaryCards } from '@/components/summary-cards';

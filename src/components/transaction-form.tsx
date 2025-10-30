@@ -7,8 +7,7 @@ import { Calendar as CalendarIcon, Edit, PlusCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { addDoc, collection, doc, serverTimestamp, setDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { addDoc, collection, doc, serverTimestamp, setDoc, Timestamp, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
