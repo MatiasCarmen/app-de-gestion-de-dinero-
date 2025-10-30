@@ -67,35 +67,14 @@ export const AIAdvisor: FC<AIAdvisorProps> = ({ transactions }) => {
     startTransition(async () => {
       setError(null);
       try {
-        const income = transactions
-          .filter((t) => t.type === "income")
-          .reduce((acc, t) => acc + t.amount, 0);
-        const expenses = transactions
-          .filter((t) => t.type === "expense")
-          .reduce((acc, t) => acc + t.amount, 0);
-
         if (transactions.length === 0) {
             setMessages(prev => [...prev, { role: "model", content: [{ text: "No tienes transacciones todavía. ¡Añade algunas para que pueda ayudarte a analizar tus finanzas! 📈" }] }]);
             return;
         }
 
-        const spendingPatterns = transactions
-          .filter((t) => t.type === "expense")
-          .map(
-            (t) =>
-              `${t.category}: $${t.amount.toFixed(2)} en ${
-                t.description
-              } por ${t.person}`
-          )
-          .join(", ");
-
         const response = await financialChat({
           history: newMessages,
-          context: {
-            income,
-            expenses,
-            spendingPatterns: spendingPatterns || "No expenses recorded.",
-          }
+          transactions: transactions,
         });
         
         setMessages(prev => [...prev, { role: "model", content: [{ text: response }] }]);
